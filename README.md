@@ -1,7 +1,8 @@
 
 ### Overview
 
-This is a sample project that demonstrates use of the RFC 7807 support for Spring Framework 6. 
+This is a sample project to demonstrate use of the RFC 7807 support for Spring Framework 6.
+The `main` branch is based on Spring MVC. The `webflux` branch is the WebFlux equivalent.
 
 ### Getting Started
 
