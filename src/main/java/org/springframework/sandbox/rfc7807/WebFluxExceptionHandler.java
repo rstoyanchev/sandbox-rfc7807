@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.server.ServerWebInputException;
+import org.springframework.web.server.MissingRequestValueException;
 
 @ControllerAdvice
 public class WebFluxExceptionHandler {
@@ -19,12 +19,10 @@ public class WebFluxExceptionHandler {
 	@ExceptionHandler
 	public ResponseEntity<ProblemDetail> handle(ErrorResponseException ex) {
 
-		if (ex instanceof ServerWebInputException) {
-
-			// Currently, no good way to differentiate and customize the various bad_request errors
-			// see https://github.com/spring-projects/spring-framework/issues/28142
-
-			ex.getBody().withType(URI.create("/problem/bad-request"));
+		if (ex instanceof MissingRequestValueException missingValueEx) {
+			ex.getBody()
+					.withType(URI.create("/problem/bad-request"))
+					.withDetail("Expected " + missingValueEx.getLabel() + ": " + missingValueEx.getName());
 		}
 		else {
 			// Customize other types of ResponseStatusException + any ErrorResponseException
