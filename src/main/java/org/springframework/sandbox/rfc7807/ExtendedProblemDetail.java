@@ -4,10 +4,18 @@ import org.springframework.http.ProblemDetail;
 
 public class ExtendedProblemDetail extends ProblemDetail {
 
-	private final String host;
+	private String host;
 
 	public ExtendedProblemDetail(ProblemDetail other, String host) {
 		super(other);
+		this.host = host;
+	}
+
+	public ExtendedProblemDetail() {
+	}
+
+
+	public void setHost(String host) {
 		this.host = host;
 	}
 
