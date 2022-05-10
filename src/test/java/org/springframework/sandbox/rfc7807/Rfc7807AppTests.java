@@ -1,14 +1,17 @@
 package org.springframework.sandbox.rfc7807;
 
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.client.RootUriTemplateHandler;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.lang.Nullable;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,10 +28,11 @@ class Rfc7807AppTests {
 	private RestTemplate restTemplate;
 
 	@BeforeEach
-	void setUp(@Autowired WebClient.Builder webClientBuilder, @Autowired RestTemplateBuilder restTemplateBuilder) {
+	void setUp() {
 		String baseUrl = "http://localhost:" + this.port;
-		this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-		this.restTemplate = restTemplateBuilder.uriTemplateHandler(new RootUriTemplateHandler(baseUrl)).build();
+		this.webClient = WebClient.builder().baseUrl(baseUrl).build();
+		this.restTemplate = new RestTemplate();
+		this.restTemplate.setUriTemplateHandler(new RootUriTemplateHandler(baseUrl));
 	}
 
 	@Test
@@ -38,7 +42,8 @@ class Rfc7807AppTests {
 				.bodyToMono(String.class)
 				.doOnNext(System.out::println)
 				.onErrorResume(WebClientResponseException.class, ex -> {
-					System.out.println(ex.getResponseBodyAs(ExtendedProblemDetail.class));
+					ExtendedProblemDetail body = ex.getResponseBodyAs(ExtendedProblemDetail.class);
+					System.out.println(format(ex.getStatusCode(), ex.getHeaders(), body));
 					return Mono.empty();
 				})
 				.block();
@@ -51,8 +56,17 @@ class Rfc7807AppTests {
 			System.out.println(result);
 		}
 		catch (RestClientResponseException ex) {
-			System.out.println(ex.getResponseBodyAs(ExtendedProblemDetail.class));
+			ExtendedProblemDetail body = ex.getResponseBodyAs(ExtendedProblemDetail.class);
+			System.out.println(format(ex.getStatusCode(), ex.getResponseHeaders(), body));
 		}
+	}
+
+	private String format(HttpStatusCode statusCode, @Nullable HttpHeaders headers, ExtendedProblemDetail body) {
+		return "\nHTTP Status " + statusCode + "\n\n" +
+				(headers != null ? headers : HttpHeaders.EMPTY).entrySet().stream()
+						.map(entry -> entry.getKey() + ":" + entry.getValue())
+						.collect(Collectors.joining("\n")) +
+				"\n\n" + body;
 	}
 
 }
