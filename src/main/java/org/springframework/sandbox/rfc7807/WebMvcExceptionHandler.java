@@ -7,8 +7,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.sandbox.rfc7807.exception.ProblemDetailException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -48,5 +50,28 @@ public class WebMvcExceptionHandler extends ResponseEntityExceptionHandler {
 
 		return super.handleExceptionInternal(ex, body, headers, statusCode, request);
 	}
+
+    @ExceptionHandler(value
+        = {ProblemDetailException.class})
+    protected ResponseEntity<Object> handleR(
+        RuntimeException ex, WebRequest request) throws Exception {
+
+        var problemDetail = ((ProblemDetailException) ex).getDetail();
+        if (clientAcceptsProblem(request)) {
+            return processExceptionAsProblem(ex, request, problemDetail);
+        } else {
+            return this.handleExceptionInternal(ex, problemDetail.getTitle(), new HttpHeaders(), HttpStatusCode.valueOf(problemDetail.getStatus()),
+                                                request);
+        }
+    }
+
+    private ResponseEntity<Object> processExceptionAsProblem(RuntimeException ex, WebRequest request, ProblemDetail problemDetail) {
+        return handleExceptionInternal(ex, problemDetail,
+                                       new HttpHeaders(), HttpStatusCode.valueOf(problemDetail.getStatus()), request);
+    }
+
+    private boolean clientAcceptsProblem(WebRequest request) {
+        return "application/problem+json".equals(request.getHeader("Accept"));
+    }
 
 }
