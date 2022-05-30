@@ -60,7 +60,7 @@ public class WebMvcExceptionHandler extends ResponseEntityExceptionHandler {
         if (clientAcceptsProblem(request)) {
             return processExceptionAsProblem(ex, request, problemDetail);
         } else {
-            return this.handleExceptionInternal(ex, problemDetail.getTitle(), new HttpHeaders(), HttpStatusCode.valueOf(problemDetail.getStatus()),
+            return this.handleExceptionInternal(ex, ((ProblemDetailException) ex).getDetail(), new HttpHeaders(), HttpStatusCode.valueOf(problemDetail.getStatus()),
                                                 request);
         }
     }
