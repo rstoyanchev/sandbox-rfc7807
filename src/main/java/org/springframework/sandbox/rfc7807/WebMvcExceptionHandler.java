@@ -53,14 +53,15 @@ public class WebMvcExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value
         = {ProblemDetailException.class})
-    protected ResponseEntity<Object> handleR(
+    protected ResponseEntity<Object> handleProblemDetailException(
         RuntimeException ex, WebRequest request) throws Exception {
 
         var problemDetail = ((ProblemDetailException) ex).getDetail();
         if (clientAcceptsProblem(request)) {
             return processExceptionAsProblem(ex, request, problemDetail);
         } else {
-            return this.handleExceptionInternal(ex, ((ProblemDetailException) ex).getDetail(), new HttpHeaders(), HttpStatusCode.valueOf(problemDetail.getStatus()),
+            return this.handleExceptionInternal(ex, ((ProblemDetailException) ex).getDetail(), new HttpHeaders(),
+                                                HttpStatusCode.valueOf(problemDetail.getStatus()),
                                                 request);
         }
     }
